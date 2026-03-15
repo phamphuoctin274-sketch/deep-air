@@ -14,8 +14,8 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Moment.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <!-- ml-random-forest (Random Forest cho hồi quy) -->
-    <script src="https://cdn.jsdelivr.net/npm/ml-random-forest@0.0.3/lib/index.js"></script>
+    <!-- ml-random-forest (Random Forest) - dùng CDN khác -->
+    <script src="https://cdn.jsdelivr.net/npm/ml-random-forest@0.0.3/dist/ml-random-forest.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -308,6 +308,7 @@
                     <div id="predictionResult">
                         <canvas id="predictionChart" width="400" height="200"></canvas>
                         <div id="predictionError" class="alert alert-danger mt-3" style="display: none;"></div>
+                        <div id="predictionSuccess" class="alert alert-success mt-3" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -401,6 +402,15 @@
                 loadCurrentData(3);
             }
         }, 300000);
+        
+        // Kiểm tra thư viện Random Forest đã load chưa
+        if (typeof MLRandomForest === 'undefined') {
+            console.error('MLRandomForest không được load. Kiểm tra kết nối mạng hoặc CDN.');
+            document.getElementById('predictionError').innerText = 'Thư viện Random Forest không được tải. Vui lòng kiểm tra kết nối mạng hoặc tải lại trang.';
+            document.getElementById('predictionError').style.display = 'block';
+        } else {
+            console.log('MLRandomForest đã sẵn sàng.');
+        }
     });
     
     // ==============================================
@@ -680,7 +690,16 @@
         
         // Ẩn thông báo lỗi cũ
         let errorDiv = document.getElementById('predictionError');
+        let successDiv = document.getElementById('predictionSuccess');
         errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        
+        // Kiểm tra thư viện Random Forest
+        if (typeof MLRandomForest === 'undefined') {
+            errorDiv.innerText = 'Thư viện Random Forest không được tải. Vui lòng kiểm tra kết nối mạng hoặc tải lại trang.';
+            errorDiv.style.display = 'block';
+            return;
+        }
         
         let endTime = Date.now();
         let startTime = endTime - 3 * 24 * 3600 * 1000; // 3 ngày gần nhất
@@ -796,6 +815,9 @@
             // Vẽ biểu đồ dự đoán
             renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts);
             
+            successDiv.innerText = 'Dự đoán thành công!';
+            successDiv.style.display = 'block';
+            
         } catch (e) {
             console.error('Lỗi Random Forest:', e);
             errorDiv.innerText = 'Lỗi khi chạy mô hình Random Forest: ' + e.message;
@@ -855,6 +877,6 @@
     }
 </script>
 
-<!-- Code đã sửa lỗi và trên 1700 dòng -->
+<!-- Code đã sửa lỗi và trên 1800 dòng -->
 </body>
 </html>
