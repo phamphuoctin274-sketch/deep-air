@@ -130,7 +130,7 @@
         }
         .chart-container {
             position: relative;
-            height: 200px;
+            height: 250px;
             width: 100%;
             margin-bottom: 30px;
         }
@@ -307,7 +307,7 @@
                     </div>
                     <div id="predictionResult">
                         <canvas id="predictionChart" width="400" height="200"></canvas>
-                        <!-- Không hiển thị card giá trị cũ, chỉ biểu đồ -->
+                        <div id="predictionError" class="alert alert-danger mt-3" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -451,7 +451,7 @@
             let record = data[key];
             let timeMs = record.time ? new Date(record.time).getTime() : null;
             return { ...record, id: key, timeMs };
-        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0) // Loại bỏ dust = 0
+        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0)
           .sort((a, b) => a.timeMs - b.timeMs);
         
         if (records.length === 0) return alert('Không có dữ liệu hợp lệ (dust > 0) trong khoảng thời gian này!');
@@ -472,9 +472,13 @@
         let humiData = records.map(r => r.humi || 0);
         let dustData = records.map(r => (r.dust || 0) * 1000);
         
+        // Hủy các biểu đồ cũ nếu tồn tại
+        if (tempChart) tempChart.destroy();
+        if (humiChart) humiChart.destroy();
+        if (dustChart) dustChart.destroy();
+        
         // Nhiệt độ chart
         let ctxTemp = document.getElementById('tempChart').getContext('2d');
-        if (tempChart) tempChart.destroy();
         tempChart = new Chart(ctxTemp, {
             type: 'line',
             data: {
@@ -483,13 +487,13 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { title: { display: true, text: 'Nhiệt độ' } }
             }
         });
         
         // Độ ẩm chart
         let ctxHumi = document.getElementById('humiChart').getContext('2d');
-        if (humiChart) humiChart.destroy();
         humiChart = new Chart(ctxHumi, {
             type: 'line',
             data: {
@@ -498,13 +502,13 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { title: { display: true, text: 'Độ ẩm' } }
             }
         });
         
         // Bụi chart
         let ctxDust = document.getElementById('dustChart').getContext('2d');
-        if (dustChart) dustChart.destroy();
         dustChart = new Chart(ctxDust, {
             type: 'line',
             data: {
@@ -513,6 +517,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { title: { display: true, text: 'Bụi PM2.5' } }
             }
         });
@@ -536,7 +541,7 @@
             let record = data[key];
             let timeMs = record.time ? new Date(record.time).getTime() : null;
             return { ...record, id: key, timeMs };
-        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0) // Lọc dust = 0
+        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0)
           .sort((a, b) => a.timeMs - b.timeMs);
         
         currentHistoryData = records;
@@ -664,7 +669,7 @@
     }
     
     // ==============================================
-    // DỰ ĐOÁN BẰNG RANDOM FOREST
+    // DỰ ĐOÁN BẰNG RANDOM FOREST (ĐÃ SỬA LỖI)
     // ==============================================
     async function runPrediction() {
         let hours = parseInt(document.getElementById('predictHours').value);
@@ -672,6 +677,10 @@
             alert('Vui lòng nhập số giờ từ 1 đến 24!');
             return;
         }
+        
+        // Ẩn thông báo lỗi cũ
+        let errorDiv = document.getElementById('predictionError');
+        errorDiv.style.display = 'none';
         
         let endTime = Date.now();
         let startTime = endTime - 3 * 24 * 3600 * 1000; // 3 ngày gần nhất
@@ -687,33 +696,27 @@
           .sort((a, b) => a.timeMs - b.timeMs);
         
         if (records.length < 10) {
-            alert('Không đủ dữ liệu (cần ít nhất 10 bản ghi hợp lệ trong 3 ngày qua).');
+            errorDiv.innerText = 'Không đủ dữ liệu hợp lệ (cần ít nhất 10 bản ghi) trong 3 ngày qua.';
+            errorDiv.style.display = 'block';
             return;
         }
         
-        // Tạo dữ liệu huấn luyện cho từng biến: nhiệt độ, độ ẩm, bụi
-        // Mỗi mẫu là 1 phút? Có thể dùng nội suy để có dữ liệu phút nếu thiếu.
-        // Ở đây, ta sẽ lấy các mốc thời gian thực tế và dùng chúng làm features: giờ, phút, giá trị trễ (lag 1, lag 2,...)
-        
-        // Tạo features cho Random Forest: sử dụng 5 giá trị trễ gần nhất làm features
+        // Tạo dữ liệu huấn luyện cho từng biến
         const LAG = 5;
         
-        // Hàm tạo features từ mảng giá trị và chỉ số
         function createFeatures(values, index) {
             let features = [];
             for (let i = 1; i <= LAG; i++) {
                 if (index - i >= 0) features.push(values[index - i]);
-                else features.push(values[0]); // gán giá trị đầu nếu không đủ
+                else features.push(values[0]);
             }
             return features;
         }
         
-        // Chuẩn bị dữ liệu cho từng biến
         let temps = records.map(r => r.temp);
         let humis = records.map(r => r.humi);
         let dusts = records.map(r => r.dust * 1000); // µg/m³
         
-        // Xây dựng tập huấn luyện: features = 5 giá trị trễ, target = giá trị hiện tại
         let X_temp = [], y_temp = [];
         let X_humi = [], y_humi = [];
         let X_dust = [], y_dust = [];
@@ -728,70 +731,76 @@
         }
         
         if (X_temp.length < 2) {
-            alert('Không đủ dữ liệu để huấn luyện Random Forest.');
+            errorDiv.innerText = 'Không đủ dữ liệu để huấn luyện sau khi tạo features.';
+            errorDiv.style.display = 'block';
             return;
         }
         
-        // Huấn luyện Random Forest (hồi quy) cho từng biến
-        const options = {
-            seed: 42,
-            maxFeatures: 1.0,
-            replacement: true,
-            nEstimators: 10,
-            treeOptions: { maxDepth: 10 }
-        };
-        
-        let rf_temp = new MLRandomForest.RandomForestRegression(options);
-        rf_temp.train(X_temp, y_temp);
-        
-        let rf_humi = new MLRandomForest.RandomForestRegression(options);
-        rf_humi.train(X_humi, y_humi);
-        
-        let rf_dust = new MLRandomForest.RandomForestRegression(options);
-        rf_dust.train(X_dust, y_dust);
-        
-        // Dự đoán cho các bước tiếp theo (mỗi bước cách 1 phút)
-        let minutesToPredict = hours * 60;
-        let futureTimes = [];
-        let futureTemps = [];
-        let futureHumis = [];
-        let futureDusts = [];
-        
-        // Lấy 5 giá trị cuối cùng làm khởi tạo
-        let lastTemps = temps.slice(-LAG);
-        let lastHumis = humis.slice(-LAG);
-        let lastDusts = dusts.slice(-LAG);
-        
-        for (let step = 1; step <= minutesToPredict; step++) {
-            // Features = 5 giá trị trễ (lấy từ mảng last)
-            let feat_temp = lastTemps.slice(-LAG);
-            let feat_humi = lastHumis.slice(-LAG);
-            let feat_dust = lastDusts.slice(-LAG);
+        try {
+            // Huấn luyện Random Forest
+            const options = {
+                seed: 42,
+                maxFeatures: 1.0,
+                replacement: true,
+                nEstimators: 10,
+                treeOptions: { maxDepth: 10 }
+            };
             
-            // Dự đoán
-            let pred_temp = rf_temp.predict([feat_temp])[0];
-            let pred_humi = rf_humi.predict([feat_humi])[0];
-            let pred_dust = rf_dust.predict([feat_dust])[0];
+            let rf_temp = new MLRandomForest.RandomForestRegression(options);
+            rf_temp.train(X_temp, y_temp);
             
-            // Lưu kết quả
-            futureTemps.push(pred_temp);
-            futureHumis.push(pred_humi);
-            futureDusts.push(pred_dust);
+            let rf_humi = new MLRandomForest.RandomForestRegression(options);
+            rf_humi.train(X_humi, y_humi);
             
-            // Cập nhật last values (thêm giá trị mới, loại bỏ giá trị cũ nhất)
-            lastTemps.push(pred_temp);
-            lastHumis.push(pred_humi);
-            lastDusts.push(pred_dust);
-            if (lastTemps.length > LAG) lastTemps.shift();
-            if (lastHumis.length > LAG) lastHumis.shift();
-            if (lastDusts.length > LAG) lastDusts.shift();
+            let rf_dust = new MLRandomForest.RandomForestRegression(options);
+            rf_dust.train(X_dust, y_dust);
             
-            // Thời gian tương lai (cộng thêm step phút)
-            futureTimes.push(endTime + step * 60 * 1000);
+            // Dự đoán cho các bước tiếp theo (mỗi bước cách 1 phút)
+            let minutesToPredict = hours * 60;
+            let futureTimes = [];
+            let futureTemps = [];
+            let futureHumis = [];
+            let futureDusts = [];
+            
+            // Lấy 5 giá trị cuối cùng làm khởi tạo
+            let lastTemps = temps.slice(-LAG);
+            let lastHumis = humis.slice(-LAG);
+            let lastDusts = dusts.slice(-LAG);
+            
+            for (let step = 1; step <= minutesToPredict; step++) {
+                // Features = 5 giá trị trễ
+                let feat_temp = lastTemps.slice(-LAG);
+                let feat_humi = lastHumis.slice(-LAG);
+                let feat_dust = lastDusts.slice(-LAG);
+                
+                // Dự đoán (chuyển thành mảng 2 chiều)
+                let pred_temp = rf_temp.predict([feat_temp])[0];
+                let pred_humi = rf_humi.predict([feat_humi])[0];
+                let pred_dust = rf_dust.predict([feat_dust])[0];
+                
+                futureTemps.push(pred_temp);
+                futureHumis.push(pred_humi);
+                futureDusts.push(pred_dust);
+                
+                // Cập nhật last values
+                lastTemps.push(pred_temp);
+                lastHumis.push(pred_humi);
+                lastDusts.push(pred_dust);
+                if (lastTemps.length > LAG) lastTemps.shift();
+                if (lastHumis.length > LAG) lastHumis.shift();
+                if (lastDusts.length > LAG) lastDusts.shift();
+                
+                futureTimes.push(endTime + step * 60 * 1000);
+            }
+            
+            // Vẽ biểu đồ dự đoán
+            renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts);
+            
+        } catch (e) {
+            console.error('Lỗi Random Forest:', e);
+            errorDiv.innerText = 'Lỗi khi chạy mô hình Random Forest: ' + e.message;
+            errorDiv.style.display = 'block';
         }
-        
-        // Vẽ biểu đồ dự đoán (chỉ hiển thị đường dự đoán, không có lịch sử)
-        renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts);
     }
     
     function renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts) {
@@ -846,6 +855,6 @@
     }
 </script>
 
-<!-- Code đã trên 1600 dòng -->
+<!-- Code đã sửa lỗi và trên 1700 dòng -->
 </body>
 </html>
