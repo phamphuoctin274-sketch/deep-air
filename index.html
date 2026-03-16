@@ -3,137 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống giám sát chất lượng không khí</title>
+    <title>AirQuality Monitoring</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Chart.js 3 -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <!-- SheetJS (XLSX) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <!-- Moment.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <!-- Không cần thư viện Random Forest nữa, dùng thuật toán nội bộ -->
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --light-bg: #ecf0f1;
-        }
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .navbar {
-            background-color: var(--primary-color) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .navbar-brand {
-            font-weight: bold;
-            color: white !important;
-            font-size: 1.5rem;
-        }
-        .nav-tabs .nav-link {
-            color: var(--primary-color);
-            font-weight: 500;
-            border: none;
-            padding: 10px 20px;
-            margin-right: 5px;
-            transition: all 0.3s;
-        }
-        .nav-tabs .nav-link:hover {
-            background-color: rgba(52, 152, 219, 0.1);
-            color: var(--secondary-color);
-        }
-        .nav-tabs .nav-link.active {
-            color: var(--secondary-color);
-            border-bottom: 3px solid var(--secondary-color);
-            background-color: transparent;
-        }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid #eee;
-            font-weight: 600;
-            color: var(--primary-color);
-            border-radius: 10px 10px 0 0 !important;
-            padding: 15px 20px;
-        }
-        .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
-        }
-        .aqi-indicator {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        .aqi-good { background-color: #00e400; }
-        .aqi-moderate { background-color: #ffff00; }
-        .aqi-unhealthy-sensitive { background-color: #ff7e00; }
-        .aqi-unhealthy { background-color: #ff0000; }
-        .aqi-very-unhealthy { background-color: #8f3f97; }
-        .aqi-hazardous { background-color: #7e0023; }
-        .table-responsive {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        .config-form {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        .current-values {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
-        .value-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            flex: 1;
-            margin: 0 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .value-box h3 {
-            font-size: 2rem;
-            margin: 0;
-        }
-        .value-box p {
-            margin: 0;
-            opacity: 0.9;
-        }
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
-            margin-bottom: 30px;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -151,37 +27,27 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab" aria-controls="current" aria-selected="true"><i class="fas fa-chart-line me-2"></i>Dữ liệu hiện tại</button>
+            <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab"><i class="fas fa-chart-line me-2"></i>Dữ liệu hiện tại</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false"><i class="fas fa-history me-2"></i>Lịch sử</button>
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab"><i class="fas fa-history me-2"></i>Lịch sử</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab" aria-controls="config" aria-selected="false"><i class="fas fa-cog me-2"></i>Cài đặt</button>
+            <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab"><i class="fas fa-cog me-2"></i>Cài đặt</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="predict-tab" data-bs-toggle="tab" data-bs-target="#predict" type="button" role="tab" aria-controls="predict" aria-selected="false"><i class="fas fa-brain me-2"></i>Dự đoán</button>
+            <button class="nav-link" id="predict-tab" data-bs-toggle="tab" data-bs-target="#predict" type="button" role="tab"><i class="fas fa-brain me-2"></i>Dự đoán</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="control-tab" data-bs-toggle="tab" data-bs-target="#control" type="button" role="tab"><i class="fas fa-toggle-on me-2"></i>Điều khiển</button>
         </li>
     </ul>
 
     <!-- Tab content -->
     <div class="tab-content" id="myTabContent">
         <!-- Tab 1: Dữ liệu hiện tại -->
-        <div class="tab-pane fade show active" id="current" role="tabpanel" aria-labelledby="current-tab">
-            <div class="current-values">
-                <div class="value-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <p>Nhiệt độ</p>
-                    <h3 id="currentTemp">-- °C</h3>
-                </div>
-                <div class="value-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <p>Độ ẩm</p>
-                    <h3 id="currentHumidity">-- %</h3>
-                </div>
-                <div class="value-box" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
-                    <p>Bụi PM2.5</p>
-                    <h3 id="currentPm25">-- µg/m³</h3>
-                </div>
-            </div>
+        <div class="tab-pane fade show active" id="current" role="tabpanel">
+            <div class="current-values" id="currentValues"></div>
             <div class="row">
                 <div class="col-md-12">
                     <div class="card">
@@ -210,7 +76,7 @@
         </div>
 
         <!-- Tab 2: Lịch sử -->
-        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        <div class="tab-pane fade" id="history" role="tabpanel">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-search me-2"></i>Tìm kiếm lịch sử
@@ -259,7 +125,7 @@
         </div>
 
         <!-- Tab 3: Cài đặt -->
-        <div class="tab-pane fade" id="config" role="tabpanel" aria-labelledby="config-tab">
+        <div class="tab-pane fade" id="config" role="tabpanel">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-sliders-h me-2"></i>Cấu hình Firebase
@@ -268,18 +134,16 @@
                     <form id="configForm" class="config-form">
                         <div class="mb-3">
                             <label for="firebaseHost" class="form-label">Firebase Host (URL)</label>
-                            <input type="url" class="form-control" id="firebaseHost" placeholder="https://your-project.firebaseio.com/" required>
+                            <input type="url" class="form-control" id="firebaseHost" required>
                             <div class="form-text">Ví dụ: https://forest-air-pollution-default-rtdb.firebaseio.com/</div>
                         </div>
                         <div class="mb-3">
                             <label for="firebaseAuth" class="form-label">Auth Secret</label>
-                            <input type="text" class="form-control" id="firebaseAuth" placeholder="cMDFoQZvSQkiPGsma96pBIwxrOtc9dBOACHwidQN" required>
-                            <div class="form-text">Database secret để xác thực REST API</div>
+                            <input type="text" class="form-control" id="firebaseAuth" required>
                         </div>
                         <div class="mb-3">
                             <label for="firebasePath" class="form-label">Đường dẫn dữ liệu (Node)</label>
-                            <input type="text" class="form-control" id="firebasePath" placeholder="AirQuality" value="AirQuality">
-                            <div class="form-text">Tên node chứa dữ liệu (ví dụ: AirQuality). Để trống nếu dữ liệu ở gốc.</div>
+                            <input type="text" class="form-control" id="firebasePath" value="AirQuality">
                         </div>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Lưu cấu hình</button>
                         <button type="button" class="btn btn-secondary ms-2" onclick="resetToDefaultConfig()"><i class="fas fa-undo me-1"></i>Khôi phục mặc định</button>
@@ -289,7 +153,7 @@
         </div>
 
         <!-- Tab 4: Dự đoán -->
-        <div class="tab-pane fade" id="predict" role="tabpanel" aria-labelledby="predict-tab">
+        <div class="tab-pane fade" id="predict" role="tabpanel">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-chart-line me-2"></i>Dự đoán chất lượng không khí (Hồi quy tuyến tính)
@@ -312,20 +176,58 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 5: Điều khiển -->
+        <div class="tab-pane fade" id="control" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-toggle-on me-2"></i>Điều khiển thiết bị (MQTT)
+                    <span id="mqttStatus" class="ms-2"><span class="badge bg-secondary">Đang kết nối...</span></span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5>Relay 1</h5>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="relay1Switch" style="transform: scale(1.5);">
+                                        <label class="form-check-label ms-2" id="relay1Label" for="relay1Switch">TẮT</label>
+                                    </div>
+                                    <button class="btn btn-primary mt-2" onclick="publishDevice('relay1')">Gửi lệnh</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5>Đèn LED</h5>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="ledSwitch" style="transform: scale(1.5);">
+                                        <label class="form-check-label ms-2" id="ledLabel" for="ledSwitch">TẮT</label>
+                                    </div>
+                                    <button class="btn btn-primary mt-2" onclick="publishDevice('led')">Gửi lệnh</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Footer -->
 <div class="footer">
-    <i class="fas fa-cloud-sun me-2"></i>Hệ thống giám sát chất lượng không khí - Dữ liệu từ Firebase
+    <i class="fas fa-cloud-sun me-2"></i>Hệ thống giám sát chất lượng không khí - Dữ liệu từ Firebase & MQTT
 </div>
 
-<!-- Modal chọn thời gian tùy chỉnh cho tab hiện tại -->
-<div class="modal fade" id="customTimeModal" tabindex="-1" aria-labelledby="customTimeModalLabel" aria-hidden="true">
+<!-- Modal chọn thời gian tùy chỉnh -->
+<div class="modal fade" id="customTimeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="customTimeModalLabel">Chọn khoảng thời gian</h5>
+                <h5 class="modal-title">Chọn khoảng thời gian</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -348,476 +250,19 @@
     </div>
 </div>
 
-<!-- Bootstrap JS -->
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js"></script>
 
-<script>
-    // ==============================================
-    // CẤU HÌNH MẶC ĐỊNH
-    // ==============================================
-    const DEFAULT_FIREBASE_HOST = "https://forest-air-pollution-default-rtdb.firebaseio.com/";
-    const DEFAULT_FIREBASE_AUTH = "cMDFoQZvSQkiPGsma96pBIwxrOtc9dBOACHwidQN";
-    const DEFAULT_FIREBASE_PATH = "AirQuality";
-    
-    let firebaseHost = DEFAULT_FIREBASE_HOST;
-    let firebaseAuth = DEFAULT_FIREBASE_AUTH;
-    let firebasePath = DEFAULT_FIREBASE_PATH;
-    
-    // Biến cho biểu đồ
-    let tempChart, humiChart, dustChart, predictionChart;
-    
-    // Dữ liệu lịch sử hiện tại để xuất Excel
-    let currentHistoryData = [];
-    
-    // ==============================================
-    // KHỞI TẠO TRANG
-    // ==============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        loadConfigFromStorage();
-        
-        document.getElementById('firebaseHost').value = firebaseHost;
-        document.getElementById('firebaseAuth').value = firebaseAuth;
-        document.getElementById('firebasePath').value = firebasePath;
-        
-        setDefaultHistoryTimes();
-        setDefaultCustomTimes();
-        
-        loadCurrentData(3);
-        
-        document.getElementById('historyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            loadHistoryData();
-        });
-        
-        document.getElementById('configForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            saveConfig();
-        });
-        
-        document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
-        
-        setInterval(() => {
-            if (document.getElementById('current-tab').classList.contains('active')) {
-                loadCurrentData(3);
-            }
-        }, 300000);
-    });
-    
-    // ==============================================
-    // HÀM LẤY DỮ LIỆU FIREBASE
-    // ==============================================
-    async function fetchFirebaseData() {
-        try {
-            let baseUrl = firebaseHost.replace(/\/$/, '');
-            let path = firebasePath ? `/${firebasePath}` : '';
-            let url = `${baseUrl}${path}.json?auth=${firebaseAuth}`;
-            let response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Lỗi Firebase:', error);
-            document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Mất kết nối';
-            document.getElementById('connectionStatus').classList.remove('bg-success');
-            document.getElementById('connectionStatus').classList.add('bg-danger');
-            return null;
-        }
-    }
-    
-    // ==============================================
-    // DỮ LIỆU HIỆN TẠI
-    // ==============================================
-    async function loadCurrentData(hours) {
-        let endTime = Date.now();
-        let startTime = endTime - hours * 3600 * 1000;
-        await loadDataForChart(startTime, endTime, hours);
-    }
-    
-    async function loadCustomRange() {
-        let startInput = document.getElementById('customStart').value;
-        let endInput = document.getElementById('customEnd').value;
-        if (!startInput || !endInput) return alert('Vui lòng chọn thời gian!');
-        let startTime = new Date(startInput).getTime();
-        let endTime = new Date(endInput).getTime();
-        if (startTime >= endTime) return alert('Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc!');
-        await loadDataForChart(startTime, endTime, null);
-    }
-    
-    async function loadDataForChart(startTime, endTime, hoursLabel) {
-        let data = await fetchFirebaseData();
-        if (!data) return;
-        
-        // Lọc dữ liệu, loại bỏ bản ghi có dust = 0
-        let records = Object.keys(data).map(key => {
-            let record = data[key];
-            let timeMs = record.time ? new Date(record.time).getTime() : null;
-            return { ...record, id: key, timeMs };
-        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0)
-          .sort((a, b) => a.timeMs - b.timeMs);
-        
-        if (records.length === 0) return alert('Không có dữ liệu hợp lệ (dust > 0) trong khoảng thời gian này!');
-        
-        // Cập nhật giá trị hiện tại (record mới nhất)
-        let latest = records[records.length - 1];
-        document.getElementById('currentTemp').innerText = (latest.temp !== undefined) ? latest.temp.toFixed(1) + ' °C' : '--';
-        document.getElementById('currentHumidity').innerText = (latest.humi !== undefined) ? latest.humi.toFixed(1) + ' %' : '--';
-        let dustUg = (latest.dust !== undefined) ? (latest.dust * 1000).toFixed(1) : '--';
-        document.getElementById('currentPm25').innerText = dustUg + ' µg/m³';
-        
-        renderCharts(records, hoursLabel);
-    }
-    
-    function renderCharts(records, hoursLabel) {
-        let labels = records.map(r => moment(r.timeMs).format('HH:mm DD/MM'));
-        let tempData = records.map(r => r.temp || 0);
-        let humiData = records.map(r => r.humi || 0);
-        let dustData = records.map(r => (r.dust || 0) * 1000);
-        
-        // Hủy các biểu đồ cũ nếu tồn tại
-        if (tempChart) tempChart.destroy();
-        if (humiChart) humiChart.destroy();
-        if (dustChart) dustChart.destroy();
-        
-        // Nhiệt độ chart
-        let ctxTemp = document.getElementById('tempChart').getContext('2d');
-        tempChart = new Chart(ctxTemp, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Nhiệt độ (°C)', data: tempData, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', tension: 0.1 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Nhiệt độ' } }
-            }
-        });
-        
-        // Độ ẩm chart
-        let ctxHumi = document.getElementById('humiChart').getContext('2d');
-        humiChart = new Chart(ctxHumi, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Độ ẩm (%)', data: humiData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', tension: 0.1 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Độ ẩm' } }
-            }
-        });
-        
-        // Bụi chart
-        let ctxDust = document.getElementById('dustChart').getContext('2d');
-        dustChart = new Chart(ctxDust, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Bụi PM2.5 (µg/m³)', data: dustData, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,0.1)', tension: 0.1 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Bụi PM2.5' } }
-            }
-        });
-    }
-    
-    // ==============================================
-    // LỊCH SỬ
-    // ==============================================
-    async function loadHistoryData() {
-        let startInput = document.getElementById('startDateTime').value;
-        let endInput = document.getElementById('endDateTime').value;
-        if (!startInput || !endInput) return alert('Vui lòng chọn thời gian!');
-        let startTime = new Date(startInput).getTime();
-        let endTime = new Date(endInput).getTime();
-        if (startTime >= endTime) return alert('Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc!');
-        
-        let data = await fetchFirebaseData();
-        if (!data) return;
-        
-        let records = Object.keys(data).map(key => {
-            let record = data[key];
-            let timeMs = record.time ? new Date(record.time).getTime() : null;
-            return { ...record, id: key, timeMs };
-        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0)
-          .sort((a, b) => a.timeMs - b.timeMs);
-        
-        currentHistoryData = records;
-        displayHistoryTable(records);
-    }
-    
-    function displayHistoryTable(records) {
-        let tbody = document.getElementById('historyTableBody');
-        if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không có dữ liệu (đã lọc bỏ dust=0)</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        records.forEach(record => {
-            let dustUg = record.dust * 1000;
-            let aqi = calculateAQI(dustUg);
-            let colorClass = getAQIColorClass(aqi);
-            let warning = getAQIWarning(aqi);
-            html += `<tr>
-                <td>${moment(record.timeMs).format('DD/MM/YYYY HH:mm')}</td>
-                <td>${(record.temp || 0).toFixed(1)}</td>
-                <td>${(record.humi || 0).toFixed(1)}</td>
-                <td>${dustUg.toFixed(1)}</td>
-                <td><span class="aqi-indicator ${colorClass}"></span> ${aqi}</td>
-                <td>${warning}</td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-    }
-    
-    function calculateAQI(pm25) {
-        if (pm25 <= 12.0) return Math.round((50/12) * pm25);
-        else if (pm25 <= 35.4) return Math.round(((100-51)/(35.4-12.1)) * (pm25 - 12.1) + 51);
-        else if (pm25 <= 55.4) return Math.round(((150-101)/(55.4-35.5)) * (pm25 - 35.5) + 101);
-        else if (pm25 <= 150.4) return Math.round(((200-151)/(150.4-55.5)) * (pm25 - 55.5) + 151);
-        else if (pm25 <= 250.4) return Math.round(((300-201)/(250.4-150.5)) * (pm25 - 150.5) + 201);
-        else if (pm25 <= 350.4) return Math.round(((400-301)/(350.4-250.5)) * (pm25 - 250.5) + 301);
-        else if (pm25 <= 500.4) return Math.round(((500-401)/(500.4-350.5)) * (pm25 - 350.5) + 401);
-        else return 500;
-    }
-    
-    function getAQIWarning(aqi) {
-        if (aqi <= 50) return 'Không ảnh hưởng';
-        else if (aqi <= 100) return 'Ảnh hưởng không đáng kể';
-        else if (aqi <= 150) return 'Nhóm nhạy cảm nên hạn chế ra ngoài';
-        else if (aqi <= 200) return 'Mọi người nên hạn chế hoạt động ngoài trời';
-        else if (aqi <= 300) return 'Cảnh báo sức khỏe: tránh ra ngoài';
-        else return 'Khẩn cấp: ở trong nhà, đóng cửa';
-    }
-    
-    function getAQIColorClass(aqi) {
-        if (aqi <= 50) return 'aqi-good';
-        else if (aqi <= 100) return 'aqi-moderate';
-        else if (aqi <= 150) return 'aqi-unhealthy-sensitive';
-        else if (aqi <= 200) return 'aqi-unhealthy';
-        else if (aqi <= 300) return 'aqi-very-unhealthy';
-        else return 'aqi-hazardous';
-    }
-    
-    function exportToExcel() {
-        if (currentHistoryData.length === 0) return alert('Không có dữ liệu!');
-        let excelData = currentHistoryData.map(record => {
-            let dustUg = record.dust * 1000;
-            let aqi = calculateAQI(dustUg);
-            return {
-                'Thời gian': moment(record.timeMs).format('DD/MM/YYYY HH:mm'),
-                'Nhiệt độ (°C)': (record.temp || 0).toFixed(1),
-                'Độ ẩm (%)': (record.humi || 0).toFixed(1),
-                'PM2.5 (µg/m³)': dustUg.toFixed(1),
-                'AQI': aqi,
-                'Cảnh báo': getAQIWarning(aqi)
-            };
-        });
-        let ws = XLSX.utils.json_to_sheet(excelData);
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Lịch sử chất lượng không khí');
-        XLSX.writeFile(wb, `airquality_history_${moment().format('YYYYMMDD_HHmm')}.xlsx`);
-    }
-    
-    // ==============================================
-    // CẤU HÌNH
-    // ==============================================
-    function loadConfigFromStorage() {
-        let storedHost = localStorage.getItem('firebaseHost');
-        let storedAuth = localStorage.getItem('firebaseAuth');
-        let storedPath = localStorage.getItem('firebasePath');
-        if (storedHost) firebaseHost = storedHost;
-        if (storedAuth) firebaseAuth = storedAuth;
-        if (storedPath !== null) firebasePath = storedPath;
-    }
-    
-    function saveConfig() {
-        let newHost = document.getElementById('firebaseHost').value.trim();
-        let newAuth = document.getElementById('firebaseAuth').value.trim();
-        let newPath = document.getElementById('firebasePath').value.trim();
-        if (!newHost || !newAuth) return alert('Vui lòng nhập đầy đủ thông tin!');
-        if (!newHost.endsWith('/')) newHost += '/';
-        
-        firebaseHost = newHost;
-        firebaseAuth = newAuth;
-        firebasePath = newPath;
-        
-        localStorage.setItem('firebaseHost', firebaseHost);
-        localStorage.setItem('firebaseAuth', firebaseAuth);
-        localStorage.setItem('firebasePath', firebasePath);
-        
-        document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-plug me-1"></i>Đã kết nối';
-        document.getElementById('connectionStatus').classList.add('bg-success');
-        document.getElementById('connectionStatus').classList.remove('bg-danger');
-        alert('Lưu cấu hình thành công!');
-    }
-    
-    function resetToDefaultConfig() {
-        firebaseHost = DEFAULT_FIREBASE_HOST;
-        firebaseAuth = DEFAULT_FIREBASE_AUTH;
-        firebasePath = DEFAULT_FIREBASE_PATH;
-        document.getElementById('firebaseHost').value = firebaseHost;
-        document.getElementById('firebaseAuth').value = firebaseAuth;
-        document.getElementById('firebasePath').value = firebasePath;
-        localStorage.setItem('firebaseHost', firebaseHost);
-        localStorage.setItem('firebaseAuth', firebaseAuth);
-        localStorage.setItem('firebasePath', firebasePath);
-        alert('Đã khôi phục cấu hình mặc định!');
-    }
-    
-    // ==============================================
-    // DỰ ĐOÁN BẰNG HỒI QUY TUYẾN TÍNH (THAY THẾ RANDOM FOREST)
-    // ==============================================
-    async function runPrediction() {
-        let hours = parseInt(document.getElementById('predictHours').value);
-        if (isNaN(hours) || hours < 1 || hours > 24) {
-            alert('Vui lòng nhập số giờ từ 1 đến 24!');
-            return;
-        }
-        
-        // Ẩn thông báo lỗi cũ
-        let errorDiv = document.getElementById('predictionError');
-        let successDiv = document.getElementById('predictionSuccess');
-        errorDiv.style.display = 'none';
-        successDiv.style.display = 'none';
-        
-        let endTime = Date.now();
-        let startTime = endTime - 3 * 24 * 3600 * 1000; // 3 ngày gần nhất
-        
-        let data = await fetchFirebaseData();
-        if (!data) return;
-        
-        let records = Object.keys(data).map(key => {
-            let record = data[key];
-            let timeMs = record.time ? new Date(record.time).getTime() : null;
-            return { ...record, timeMs };
-        }).filter(r => r.timeMs && r.timeMs >= startTime && r.timeMs <= endTime && r.dust > 0)
-          .sort((a, b) => a.timeMs - b.timeMs);
-        
-        if (records.length < 10) {
-            errorDiv.innerText = 'Không đủ dữ liệu hợp lệ (cần ít nhất 10 bản ghi) trong 3 ngày qua.';
-            errorDiv.style.display = 'block';
-            return;
-        }
-        
-        // Sử dụng hồi quy tuyến tính đơn giản dựa trên 5 giá trị gần nhất
-        const LAG = 5;
-        
-        // Hàm dự đoán tuyến tính (xu hướng)
-        function linearPrediction(yValues, steps) {
-            let n = yValues.length;
-            if (n < 2) return yValues[n-1];
-            let x = Array.from({ length: n }, (_, i) => i);
-            let sumX = x.reduce((a,b) => a+b, 0);
-            let sumY = yValues.reduce((a,b) => a+b, 0);
-            let sumXY = x.reduce((a,_,i) => a + x[i]*yValues[i], 0);
-            let sumXX = x.reduce((a,_,i) => a + x[i]*x[i], 0);
-            let slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-            let intercept = (sumY - slope * sumX) / n;
-            return intercept + slope * (n - 1 + steps);
-        }
-        
-        let temps = records.map(r => r.temp);
-        let humis = records.map(r => r.humi);
-        let dusts = records.map(r => r.dust * 1000); // µg/m³
-        
-        // Lấy 5 giá trị cuối cùng
-        let lastTemps = temps.slice(-LAG);
-        let lastHumis = humis.slice(-LAG);
-        let lastDusts = dusts.slice(-LAG);
-        
-        let minutesToPredict = hours * 60;
-        let futureTimes = [];
-        let futureTemps = [];
-        let futureHumis = [];
-        let futureDusts = [];
-        
-        // Dự đoán từng bước 1 phút
-        for (let step = 1; step <= minutesToPredict; step++) {
-            // Dự đoán dựa trên LAG giá trị gần nhất (dùng linearPrediction trên chính các giá trị đó)
-            // Nhưng để đơn giản, ta dùng linearPrediction trên toàn bộ chuỗi hoặc trên LAG.
-            // Ở đây ta dùng linearPrediction trên LAG giá trị gần nhất để có xu hướng cục bộ.
-            let pred_temp = linearPrediction(lastTemps, 1);
-            let pred_humi = linearPrediction(lastHumis, 1);
-            let pred_dust = linearPrediction(lastDusts, 1);
-            
-            futureTemps.push(pred_temp);
-            futureHumis.push(pred_humi);
-            futureDusts.push(pred_dust);
-            
-            // Cập nhật last values
-            lastTemps.shift();
-            lastTemps.push(pred_temp);
-            lastHumis.shift();
-            lastHumis.push(pred_humi);
-            lastDusts.shift();
-            lastDusts.push(pred_dust);
-            
-            futureTimes.push(endTime + step * 60 * 1000);
-        }
-        
-        // Vẽ biểu đồ dự đoán
-        renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts);
-        
-        successDiv.innerText = 'Dự đoán thành công! (Sử dụng hồi quy tuyến tính)';
-        successDiv.style.display = 'block';
-    }
-    
-    function renderPredictionChart(futureTimes, futureTemps, futureHumis, futureDusts) {
-        let ctx = document.getElementById('predictionChart').getContext('2d');
-        if (predictionChart) predictionChart.destroy();
-        
-        let labels = futureTimes.map(t => moment(t).format('HH:mm DD/MM'));
-        
-        predictionChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Nhiệt độ (°C) - Dự đoán', data: futureTemps, borderColor: '#e74c3c', tension: 0.1, fill: false },
-                    { label: 'Độ ẩm (%) - Dự đoán', data: futureHumis, borderColor: '#3498db', tension: 0.1, fill: false },
-                    { label: 'Bụi PM2.5 (µg/m³) - Dự đoán', data: futureDusts, borderColor: '#f39c12', tension: 0.1, fill: false }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: { display: true, text: 'Dự đoán chất lượng không khí (Hồi quy tuyến tính, từng phút)' }
-                }
-            }
-        });
-    }
-    
-    // ==============================================
-    // HÀM TIỆN ÍCH
-    // ==============================================
-    function setDefaultHistoryTimes() {
-        let end = new Date();
-        let start = new Date(end.getTime() - 24 * 3600 * 1000);
-        document.getElementById('startDateTime').value = formatDateTimeLocal(start);
-        document.getElementById('endDateTime').value = formatDateTimeLocal(end);
-    }
-    
-    function setDefaultCustomTimes() {
-        let end = new Date();
-        let start = new Date(end.getTime() - 24 * 3600 * 1000);
-        document.getElementById('customStart').value = formatDateTimeLocal(start);
-        document.getElementById('customEnd').value = formatDateTimeLocal(end);
-    }
-    
-    function formatDateTimeLocal(date) {
-        let year = date.getFullYear();
-        let month = String(date.getMonth() + 1).padStart(2, '0');
-        let day = String(date.getDate()).padStart(2, '0');
-        let hours = String(date.getHours()).padStart(2, '0');
-        let minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-</script>
-
-<!-- Code đã sửa lỗi và trên 1800 dòng -->
+<!-- Custom JS -->
+<script src="js/config.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/mqtt.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
