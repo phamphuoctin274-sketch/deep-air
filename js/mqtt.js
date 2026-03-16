@@ -1,12 +1,15 @@
-// MQTT Client
+// Cấu hình MQTT
+const mqttBroker = "broker.hivemq.com";
+const mqttPort = 8000; // WebSocket port
 let mqttClient;
 let mqttConnected = false;
 
+// Kết nối MQTT
 function connectMQTT() {
     if (mqttClient && mqttClient.isConnected()) return;
     
     const clientId = "webClient_" + Math.random().toString(16).substr(2, 8);
-    mqttClient = new Paho.MQTT.Client(MQTT_BROKER, MQTT_PORT, clientId);
+    mqttClient = new Paho.MQTT.Client(mqttBroker, mqttPort, clientId);
     
     mqttClient.onConnectionLost = (response) => {
         console.log("MQTT lost:", response.errorMessage);
@@ -17,7 +20,7 @@ function connectMQTT() {
     
     mqttClient.onMessageArrived = (message) => {
         console.log("MQTT recv:", message.payloadString, "on", message.destinationName);
-        // Nếu ESP32 gửi lại trạng thái, có thể cập nhật switch ở đây
+        // Có thể xử lý phản hồi từ thiết bị nếu cần
     };
     
     mqttClient.connect({
@@ -39,7 +42,7 @@ function connectMQTT() {
     });
 }
 
-// Hàm gửi lệnh MQTT
+// Hàm gửi lệnh điều khiển
 function publishDevice(device) {
     let switchEl, labelEl, topic;
     if (device === 'relay1') {
@@ -50,7 +53,9 @@ function publishDevice(device) {
         switchEl = document.getElementById('ledSwitch');
         labelEl = document.getElementById('ledLabel');
         topic = "device/led";
-    } else return;
+    } else {
+        return;
+    }
     
     const payload = switchEl.checked ? "1" : "0";
     labelEl.innerText = switchEl.checked ? "BẬT" : "TẮT";
@@ -65,4 +70,14 @@ function publishDevice(device) {
         switchEl.checked = !switchEl.checked;
         labelEl.innerText = switchEl.checked ? "BẬT" : "TẮT";
     }
+}
+
+// Hàm hiển thị thông báo nhanh (toast)
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
