@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('current-tab').classList.contains('active')) {
             loadCurrentData(3);
         }
-    }, 30000);
+    }, 1000);
     
     // Kết nối MQTT khi tab điều khiển được hiển thị
     document.getElementById('control-tab').addEventListener('shown.bs.tab', function () {
