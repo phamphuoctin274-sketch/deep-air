@@ -1,6 +1,10 @@
-// Cấu hình MQTT
-const mqttBroker = "broker.hivemq.com";
-const mqttPort = 8000; // WebSocket port
+// js/mqtt.js - Kết nối MQTT qua WSS
+
+// Cấu hình MQTT với WebSocket Secure (WSS)
+const mqttBroker = "broker.hivemq.com";   // Hoặc test.mosquitto.org
+const mqttPort = 8080;                    // Cổng WSS của HiveMQ (8080)
+// Nếu dùng test.mosquitto.org, dùng cổng 8081
+
 let mqttClient;
 let mqttConnected = false;
 
@@ -20,15 +24,16 @@ function connectMQTT() {
     
     mqttClient.onMessageArrived = (message) => {
         console.log("MQTT recv:", message.payloadString, "on", message.destinationName);
-        // Có thể xử lý phản hồi từ thiết bị nếu cần
+        // Nếu muốn nhận trạng thái phản hồi từ ESP32, xử lý ở đây
     };
     
-    mqttClient.connect({
+    // Cấu hình kết nối với SSL
+    const connectOptions = {
         onSuccess: () => {
-            console.log("MQTT connected");
+            console.log("MQTT connected via WSS");
             document.getElementById('mqttStatus').innerHTML = '<span class="badge bg-success">MQTT OK</span>';
             mqttConnected = true;
-            // Subscribe nếu muốn nhận trạng thái từ ESP32
+            // Có thể subscribe topic để nhận trạng thái thiết bị
             // mqttClient.subscribe("device/status");
         },
         onFailure: (err) => {
@@ -37,12 +42,15 @@ function connectMQTT() {
             mqttConnected = false;
             setTimeout(connectMQTT, 5000);
         },
-        useSSL: false,
+        useSSL: true,        // Bắt buộc để dùng WSS
+        timeout: 5,
         keepAliveInterval: 30
-    });
+    };
+    
+    mqttClient.connect(connectOptions);
 }
 
-// Hàm gửi lệnh điều khiển
+// Gửi lệnh điều khiển thiết bị
 function publishDevice(device) {
     let switchEl, labelEl, topic;
     if (device === 'relay1') {
@@ -67,17 +75,8 @@ function publishDevice(device) {
         showToast('success', `Đã gửi ${device}: ${payload === "1" ? "BẬT" : "TẮT"}`);
     } else {
         showToast('danger', 'MQTT chưa kết nối!');
+        // Khôi phục trạng thái switch
         switchEl.checked = !switchEl.checked;
         labelEl.innerText = switchEl.checked ? "BẬT" : "TẮT";
     }
-}
-
-// Hàm hiển thị thông báo nhanh (toast)
-function showToast(type, message) {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    toast.style.zIndex = '9999';
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
 }
