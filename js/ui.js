@@ -1,6 +1,6 @@
-// Các hàm xử lý giao diện
+// ui.js - Các hàm tiện ích giao diện
 
-// Hiển thị toast
+// Hiển thị thông báo nhanh (toast)
 function showToast(type, message) {
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
@@ -10,62 +10,30 @@ function showToast(type, message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Format datetime-local
+// Định dạng ngày giờ cho input datetime-local
 function formatDateTimeLocal(date) {
-    let year = date.getFullYear();
-    let month = String(date.getMonth() + 1).padStart(2, '0');
-    let day = String(date.getDate()).padStart(2, '0');
-    let hours = String(date.getHours()).padStart(2, '0');
-    let minutes = String(date.getMinutes()).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+// Đặt thời gian mặc định cho form lịch sử (24h trước)
 function setDefaultHistoryTimes() {
-    let end = new Date();
-    let start = new Date(end.getTime() - 24 * 3600 * 1000);
+    const end = new Date();
+    const start = new Date(end.getTime() - 24 * 3600 * 1000);
     document.getElementById('startDateTime').value = formatDateTimeLocal(start);
     document.getElementById('endDateTime').value = formatDateTimeLocal(end);
 }
 
+// Đặt thời gian mặc định cho modal tùy chỉnh
 function setDefaultCustomTimes() {
-    let end = new Date();
-    let start = new Date(end.getTime() - 24 * 3600 * 1000);
+    const end = new Date();
+    const start = new Date(end.getTime() - 24 * 3600 * 1000);
     document.getElementById('customStart').value = formatDateTimeLocal(start);
     document.getElementById('customEnd').value = formatDateTimeLocal(end);
-}
-
-// Cập nhật giá trị hiện tại lên các ô
-function updateCurrentValues(latest) {
-    document.getElementById('currentTemp').innerText = (latest.temp !== undefined) ? latest.temp.toFixed(1) + ' °C' : '--';
-    document.getElementById('currentHumidity').innerText = (latest.humi !== undefined) ? latest.humi.toFixed(1) + ' %' : '--';
-    let dustUg = (latest.dust !== undefined) ? (latest.dust * 1000).toFixed(1) : '--';
-    document.getElementById('currentPm25').innerText = dustUg + ' µg/m³';
-}
-
-// Hiển thị bảng lịch sử
-function displayHistoryTable(records) {
-    let tbody = document.getElementById('historyTableBody');
-    if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không có dữ liệu (đã lọc bỏ dust=0)</td></tr>';
-        return;
-    }
-    
-    let html = '';
-    records.forEach(record => {
-        let dustUg = record.dust * 1000;
-        let aqi = calculateAQI(dustUg);
-        let colorClass = getAQIColorClass(aqi);
-        let warning = getAQIWarning(aqi);
-        html += `<tr>
-            <td>${moment(record.timeMs).format('DD/MM/YYYY HH:mm')}</td>
-            <td>${(record.temp || 0).toFixed(1)}</td>
-            <td>${(record.humi || 0).toFixed(1)}</td>
-            <td>${dustUg.toFixed(1)}</td>
-            <td><span class="aqi-indicator ${colorClass}"></span> ${aqi}</td>
-            <td>${warning}</td>
-        </tr>`;
-    });
-    tbody.innerHTML = html;
 }
 
 // Các hàm tính AQI
@@ -96,25 +64,4 @@ function getAQIColorClass(aqi) {
     else if (aqi <= 200) return 'aqi-unhealthy';
     else if (aqi <= 300) return 'aqi-very-unhealthy';
     else return 'aqi-hazardous';
-}
-
-// Xuất Excel
-function exportToExcel() {
-    if (currentHistoryData.length === 0) return alert('Không có dữ liệu!');
-    let excelData = currentHistoryData.map(record => {
-        let dustUg = record.dust * 1000;
-        let aqi = calculateAQI(dustUg);
-        return {
-            'Thời gian': moment(record.timeMs).format('DD/MM/YYYY HH:mm'),
-            'Nhiệt độ (°C)': (record.temp || 0).toFixed(1),
-            'Độ ẩm (%)': (record.humi || 0).toFixed(1),
-            'PM2.5 (µg/m³)': dustUg.toFixed(1),
-            'AQI': aqi,
-            'Cảnh báo': getAQIWarning(aqi)
-        };
-    });
-    let ws = XLSX.utils.json_to_sheet(excelData);
-    let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Lịch sử chất lượng không khí');
-    XLSX.writeFile(wb, `airquality_history_${moment().format('YYYYMMDD_HHmm')}.xlsx`);
 }
